@@ -1,0 +1,267 @@
+
+<h2 class="sr-only">Interactive Walla Walla water rate tier calculator — adjust multipliers and thresholds to see rates, revenue, and population distribution across 5 tiers</h2>
+<style>
+*{box-sizing:border-box}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.season-btn{padding:6px 16px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;background:transparent;color:var(--color-text-secondary)}
+.season-btn.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info);font-weight:500}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:1rem}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px}
+.card-title{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px}
+.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.slider-label{font-size:12px;color:var(--color-text-secondary);width:80px;flex-shrink:0}
+.slider-row input[type=range]{flex:1}
+.slider-val{font-size:13px;font-weight:500;color:var(--color-text-primary);width:40px;text-align:right;flex-shrink:0}
+.threshold-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.threshold-label{font-size:12px;color:var(--color-text-secondary);width:90px;flex-shrink:0}
+.threshold-input{width:90px;font-size:13px;padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+.metric-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px}
+.metric .lbl{font-size:11px;color:var(--color-text-secondary);margin:0 0 2px}
+.metric .val{font-size:18px;font-weight:500;color:var(--color-text-primary);margin:0}
+.metric .sub{font-size:10px;color:var(--color-text-tertiary);margin:1px 0 0}
+.tier-table{width:100%;border-collapse:collapse;font-size:13px}
+.tier-table th{text-align:left;padding:6px 8px;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.tier-table td{padding:7px 8px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tier-table tr:last-child td{border-bottom:none}
+.td-r{text-align:right;font-variant-numeric:tabular-nums}
+.bar-cell{width:100px}
+.pop-bar-bg{height:8px;background:var(--color-border-tertiary);border-radius:4px;overflow:hidden}
+.pop-bar-fill{height:100%;border-radius:4px}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:500}
+.pill-up{background:#FAECE7;color:#993C1D}
+.pill-dn{background:#E1F5EE;color:#085041}
+.pill-flat{background:#E6F1FB;color:#185FA5}
+.rev-ok{color:#0F6E56;font-weight:500}
+.rev-warn{color:#993C1D;font-weight:500}
+.section-lbl{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 8px}
+.month-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-bottom:1rem}
+.month-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 4px;text-align:center}
+.month-name{font-size:10px;color:var(--color-text-secondary);margin:0 0 3px}
+.month-use{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.month-bars{display:flex;gap:1px;height:20px;align-items:flex-end}
+.month-bar{flex:1;border-radius:1px}
+</style>
+
+<div class="top-bar">
+  <span style="font-size:14px;font-weight:500;color:var(--color-text-primary)">Summer Rate Playground — May through October</span>
+  <span style="font-size:12px;color:var(--color-text-tertiary);margin-left:4px">Adjust multipliers and thresholds to see live rates, revenue, and account distribution</span>
+</div>
+
+<div class="metric-strip" id="metrics"></div>
+
+<div class="grid2">
+  <div class="card">
+    <p class="card-title">Tier multipliers (relative to T1)</p>
+    <div class="slider-row"><span class="slider-label">T1 — base</span><input type="range" min="10" max="50" step="1" id="m1" value="25" oninput="calc()"><span class="slider-val" id="m1v">2.5×</span></div>
+    <div class="slider-row"><span class="slider-label">T2 multiplier</span><input type="range" min="11" max="60" step="1" id="m2" value="31" oninput="calc()"><span class="slider-val" id="m2v">3.1×</span></div>
+    <div class="slider-row"><span class="slider-label">T3 multiplier</span><input type="range" min="12" max="80" step="1" id="m3" value="37" oninput="calc()"><span class="slider-val" id="m3v">3.7×</span></div>
+    <div class="slider-row"><span class="slider-label">T4 multiplier</span><input type="range" min="15" max="120" step="1" id="m4" value="43" oninput="calc()"><span class="slider-val" id="m4v">4.3×</span></div>
+    <div class="slider-row"><span class="slider-label">T5 multiplier</span><input type="range" min="20" max="150" step="1" id="m5" value="51" oninput="calc()"><span class="slider-val" id="m5v">5.1×</span></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Tier thresholds (gal/month)</p>
+    <div class="threshold-row"><span class="threshold-label">T1 / T2 cutoff</span><input class="threshold-input" type="number" id="t12" value="6000" step="500" oninput="calc()"><span style="font-size:11px;color:var(--color-text-tertiary)">gal/mo</span></div>
+    <div class="threshold-row"><span class="threshold-label">T2 / T3 cutoff</span><input class="threshold-input" type="number" id="t23" value="13000" step="500" oninput="calc()"><span style="font-size:11px;color:var(--color-text-tertiary)">gal/mo</span></div>
+    <div class="threshold-row"><span class="threshold-label">T3 / T4 cutoff</span><input class="threshold-input" type="number" id="t34" value="25000" step="500" oninput="calc()"><span style="font-size:11px;color:var(--color-text-tertiary)">gal/mo</span></div>
+    <div class="threshold-row"><span class="threshold-label">T4 / T5 cutoff</span><input class="threshold-input" type="number" id="t45" value="44500" step="500" oninput="calc()"><span style="font-size:11px;color:var(--color-text-tertiary)">gal/mo</span></div>
+    <div style="margin-top:8px">
+      <button onclick="resetDefaults()" style="font-size:12px;padding:4px 10px">Reset to defaults</button>
+      <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:8px">Summer defaults</span>
+    </div>
+  </div>
+</div>
+
+<p class="section-lbl">Rates, population distribution & revenue by tier</p>
+<table class="tier-table" id="tier-table">
+  <thead><tr>
+    <th>Tier</th>
+    <th>Range</th>
+    <th class="td-r">Rate ($/kgal)</th>
+    <th class="td-r">vs flat $4.051</th>
+    <th>% of accounts (avg month)</th>
+    <th class="td-r">Revenue / yr</th>
+  </tr></thead>
+  <tbody id="tier-body"></tbody>
+</table>
+
+<p class="section-lbl" style="margin-top:1rem">Monthly breakdown — % of accounts in each tier</p>
+<div class="month-grid" id="month-grid"></div>
+
+<div style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px">
+  Population estimates use log-normal distribution (CV=0.8) fitted to 2025 monthly averages. Summer revenue target: $4,026,660. Winter (Nov–Apr) stays at flat rate $4.051/kgal.
+</div>
+
+<script>
+const FLAT = 4.051;
+const TARGET = 4026660;
+const RES = 9451;
+const CV = 0.80;
+
+const MONTHLY = {5:12498,6:19820,7:23661,8:21315,9:15506,10:7093};
+const MN = {5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct'};
+const SUMMER = [5,6,7,8,9,10];
+
+const TIER_COLORS = ['#1C7A6E','#378ADD','#EF9F27','#D85A30','#8B1A1A'];
+const TIER_NAMES  = ['T1 Low/Indoor Only','T2 Efficient Family','T3 Average Family','T4 High Irrigator','T5 Peak Irrigator'];
+
+const summerRevTarget = TARGET;
+let season = 'summer';
+
+const defaults = {
+  summer: { thresholds:[0,6000,13000,25000,44500,Infinity], ratios:[2.5,3.1,3.7,4.3,5.1] },
+};
+
+function setSeason(s) { season = s; resetDefaults(); }
+
+function resetDefaults() {
+  const d = defaults['summer'];
+  document.getElementById('m1').value = Math.round(d.ratios[0]*10);
+  document.getElementById('m2').value = Math.round(d.ratios[1]*10);
+  document.getElementById('m3').value = Math.round(d.ratios[2]*10);
+  document.getElementById('m4').value = Math.round(d.ratios[3]*10);
+  document.getElementById('m5').value = Math.round(d.ratios[4]*10);
+  document.getElementById('t12').value = d.thresholds[1];
+  document.getElementById('t23').value = d.thresholds[2];
+  document.getElementById('t34').value = d.thresholds[3];
+  document.getElementById('t45').value = d.thresholds[4];
+  calc();
+}
+
+function lnParams(mean) {
+  const s2 = Math.log(1 + CV*CV);
+  const s  = Math.sqrt(s2);
+  const mu = Math.log(mean) - s2/2;
+  return {mu, s};
+}
+
+function normCDF(x) {
+  const t = 1/(1+0.2316419*Math.abs(x));
+  const d = 0.3989423*Math.exp(-x*x/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+  return x>=0 ? 1-p : p;
+}
+
+function pctInTier(mean, lo, hi) {
+  if (mean<=0) return 0;
+  const {mu,s} = lnParams(mean);
+  const cdfHi = hi===Infinity ? 1.0 : normCDF((Math.log(hi)-mu)/s);
+  const cdfLo = lo<=0 ? 0 : normCDF((Math.log(lo)-mu)/s);
+  return Math.max(0, (cdfHi-cdfLo)*100);
+}
+
+function expectedInTier(mean, lo, hi) {
+  if (mean<=0) return 0;
+  const {mu,s} = lnParams(mean);
+  const expMu = Math.exp(mu + s*s/2);
+  const normLo = lo>0 ? normCDF((Math.log(lo)-mu-s*s)/s) : 0;
+  const normHi = hi===Infinity ? 1.0 : normCDF((Math.log(hi)-mu-s*s)/s);
+  return expMu*(normHi-normLo);
+}
+
+function calc() {
+  const months = SUMMER;
+  const revTarget = summerRevTarget;
+
+  const r1=parseInt(document.getElementById('m1').value)/10;
+  const r2=parseInt(document.getElementById('m2').value)/10;
+  const r3=parseInt(document.getElementById('m3').value)/10;
+  const r4=parseInt(document.getElementById('m4').value)/10;
+  const r5=parseInt(document.getElementById('m5').value)/10;
+  const ratios=[r1,r2,r3,r4,r5];
+
+  document.getElementById('m1v').textContent=r1.toFixed(1)+'×';
+  document.getElementById('m2v').textContent=r2.toFixed(1)+'×';
+  document.getElementById('m3v').textContent=r3.toFixed(1)+'×';
+  document.getElementById('m4v').textContent=r4.toFixed(1)+'×';
+  document.getElementById('m5v').textContent=r5.toFixed(1)+'×';
+
+  const t12=+document.getElementById('t12').value||5000;
+  const t23=+document.getElementById('t23').value||12000;
+  const t34=+document.getElementById('t34').value||25000;
+  const t45=+document.getElementById('t45').value||45000;
+  const thresholds=[0,t12,t23,t34,t45,Infinity];
+
+  const annualVols=[];
+  for(let i=0;i<5;i++){
+    let v=0;
+    for(const m of months) v+=expectedInTier(MONTHLY[m],thresholds[i],thresholds[i+1])*RES;
+    annualVols.push(v);
+  }
+
+  const denom=ratios.reduce((s,r,i)=>s+r*annualVols[i]/1000,0);
+  const t1Rate=revTarget/denom;
+  const rates=ratios.map(r=>t1Rate*r);
+
+  const revs=rates.map((r,i)=>Math.round(r*annualVols[i]/1000));
+  revs[4]=revTarget-revs[0]-revs[1]-revs[2]-revs[3];
+  const totalRev=revs.reduce((s,v)=>s+v,0);
+
+  const avgPcts=[];
+  for(let i=0;i<5;i++){
+    const avg=months.reduce((s,m)=>s+pctInTier(MONTHLY[m],thresholds[i],thresholds[i+1]),0)/months.length;
+    avgPcts.push(avg);
+  }
+
+  const peakMonth=season==='summer' ? 7 : 1;
+  const peakPcts=[];
+  for(let i=0;i<5;i++) peakPcts.push(pctInTier(MONTHLY[peakMonth],thresholds[i],thresholds[i+1]));
+
+  const diff=totalRev-TARGET;
+  const pctDiff=(diff/TARGET*100);
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><p class="lbl">T1 base rate</p><p class="val">$${t1Rate.toFixed(3)}</p><p class="sub">per kgal</p></div>
+    <div class="metric"><p class="lbl">Total revenue / yr</p><p class="val ${Math.abs(pctDiff)<1?'rev-ok':'rev-warn'}">$${totalRev.toLocaleString()}</p><p class="sub">target $4,026,660</p></div>
+    <div class="metric"><p class="lbl">T4+T5 in peak month</p><p class="val">${(peakPcts[3]+peakPcts[4]).toFixed(1)}%</p><p class="sub">of accounts</p></div>
+  `;
+
+  let rows='';
+  for(let i=0;i<5;i++){
+    const lo=thresholds[i],hi=thresholds[i+1];
+    const rng=hi===Infinity?`${lo.toLocaleString()}+`:`${lo.toLocaleString()}–${hi.toLocaleString()}`;
+    const vs=(rates[i]-FLAT)/FLAT*100;
+    const pill=vs>5?`<span class="pill pill-up">+${vs.toFixed(1)}%</span>`:
+               vs<-5?`<span class="pill pill-dn">${vs.toFixed(1)}%</span>`:
+               `<span class="pill pill-flat">${vs.toFixed(1)}%</span>`;
+    const barW=Math.min(100,Math.round(avgPcts[i]));
+    rows+=`<tr>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${TIER_COLORS[i]};margin-right:6px;vertical-align:middle"></span>${TIER_NAMES[i]}</td>
+      <td style="color:var(--color-text-secondary);font-size:12px">${rng} gal/mo</td>
+      <td class="td-r"><strong>$${rates[i].toFixed(3)}</strong></td>
+      <td class="td-r">${pill}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pop-bar-bg" style="flex:1"><div class="pop-bar-fill" style="width:${barW}%;background:${TIER_COLORS[i]}"></div></div>
+          <span style="font-size:12px;font-weight:500;min-width:36px;text-align:right">${avgPcts[i].toFixed(1)}%</span>
+        </div>
+      </td>
+      <td class="td-r" style="color:var(--color-text-success);font-weight:500">$${revs[i].toLocaleString()}</td>
+    </tr>`;
+  }
+  rows+=`<tr style="background:var(--color-background-secondary)">
+    <td colspan="5" style="font-weight:500;font-size:12px">Total revenue</td>
+    <td class="td-r" style="font-weight:500;font-size:13px;color:${Math.abs(pctDiff)<1?'var(--color-text-success)':'var(--color-text-danger)'}">$${totalRev.toLocaleString()}</td>
+  </tr>`;
+  document.getElementById('tier-body').innerHTML=rows;
+
+  let monthCards='';
+  const allMonths=SUMMER;
+  for(const m of allMonths){
+    const pcts=[];
+    for(let i=0;i<5;i++) pcts.push(pctInTier(MONTHLY[m],thresholds[i],thresholds[i+1]));
+    const maxP=Math.max(...pcts);
+    const bars=pcts.map((p,i)=>`<div class="month-bar" style="height:${Math.max(2,Math.round(p/maxP*18))}px;background:${TIER_COLORS[i]}"></div>`).join('');
+    const dominant=pcts.indexOf(maxP);
+    monthCards+=`<div class="month-card">
+      <p class="month-name">${MN[m]}</p>
+      <p class="month-use" style="font-size:10px">${(MONTHLY[m]/1000).toFixed(1)}k gal</p>
+      <div class="month-bars">${bars}</div>
+      <p style="font-size:9px;color:${TIER_COLORS[dominant]};margin:3px 0 0;font-weight:500">T${dominant+1} leads</p>
+    </div>`;
+  }
+  document.getElementById('month-grid').innerHTML=monthCards;
+}
+
+resetDefaults();
+</script>
